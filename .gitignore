@@ -1,0 +1,12 @@
+# Project
+*.pkl
+
+# Python
+*.pyc
+__pycache__/
+
+# IntelliJ
+.idea/
+
+# MacOS
+.DS_Store
