@@ -10,16 +10,12 @@ from lr import Logistic
 to_label = np.vectorize(lambda x: reverse_labels_dict[x])
 
 
-def LR():
-    # your logistic regression
-    data, labels = util.prepare_data('train.csv')
-
+def cross_validation(data, labels, classifier):
     plot_data = {}
     folds = 5
     epochs = [100, 200, 500, 1000]
     lrs = [0.001, 0.005, 0.01, 0.1]
     lams = [0.001, 0.005, 0.01, 0.1]
-    logistics = []
     for epoch in epochs:
         for lr in lrs:
             for lam in lams:
@@ -27,13 +23,11 @@ def LR():
                 test_accuracies = []
                 for i in range(folds):
                     train_data, train_labels, test_data, test_labels = util.cv_split_data(data, labels, i)
-                    logistic = Logistic(train_data, train_labels)
-                    logistic.train(learning_rate=lr, max_epochs=epoch, lam=lam)
+                    model = classifier(train_data, train_labels)
+                    model.fit(learning_rate=lr, max_epochs=epoch, lam=lam)
 
-                    predicted_train_labels = logistic.predict(train_data)
-                    predicted_test_labels = logistic.predict(test_data)
-
-                    logistics.append(logistic)
+                    predicted_train_labels = model.predict(train_data)
+                    predicted_test_labels = model.predict(test_data)
 
                     train_accuracy = util.accuracy(train_labels, predicted_train_labels)
                     train_accuracies.append(train_accuracy)
@@ -46,8 +40,14 @@ def LR():
                 train_accuracy = np.mean(train_accuracies)
                 test_accuracy = np.mean(test_accuracies)
                 plot_data[(epoch, lr, lam)] = (train_accuracy, test_accuracy)
+    return plot_data
 
-    with open('lr_plot_data.pkl', 'wb') as f:
+
+def LR():
+    # your logistic regression
+    data, labels = util.prepare_data('train.csv')
+    plot_data = cross_validation(data, labels, Logistic)
+    with open('models/lr_plot_data.pkl', 'wb') as f:
         pickle.dump(plot_data, f)
 
     # train_X, train_Y, val_X, val_Y = util.split_data(X, Y)
