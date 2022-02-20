@@ -22,12 +22,11 @@ def encode_onehot(a):
         a_onehot[x[0], x[1]] = 1
     return a_onehot
 
-
+# noinspection PyPep8Naming
 class Logistic:
-    # Suppress PyArgumentNames
     def __init__(self, data, labels):
-        self.X = data
-        self.Y = encode_onehot(labels)
+        self.X = data.reset_index(drop=True)
+        self.Y = encode_onehot(labels.reset_index(drop=True))
         self.weights = np.zeros((self.X.shape[1], self.Y.shape[1]))
         # self.bias = np.zeros(self.Y.shape[0])
 
@@ -62,8 +61,7 @@ class Logistic:
         y_pred = np.dot(data_point, self.weights) + self.bias
         return sigmoid(y_pred)
 
-    def train(self, learning_rate=0.005, max_epochs=500,
-              lam=0.05):
+    def fit(self, learning_rate=0.005, max_epochs=500, lam=0.05):
         # self.method = feature_method
         # labeled_data = self.feature_extraction(labeled_data, train=True)
         ctr = 0
@@ -82,7 +80,6 @@ class Logistic:
 
     def predict(self, X):
         X_r = X.reset_index(drop=True)
-        w_r = self.weights.reset_index(drop=True)
-        z = -np.dot(X_r, w_r)
+        z = -np.dot(X_r, self.weights)
         p = softmax(z, axis=1)
         return np.argmax(p, axis=1)
