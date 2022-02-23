@@ -77,23 +77,28 @@ def extract(data, grams, n_features, vectorizer):
     return data, vectorizer
 
 
-def split_data(data, labels):
-    # train_data, test_data = all_data.iloc[:int(len(all_data) * 0.8), :], all_data.iloc[int(len(all_data) * 0.8):, :]
-    #     return train_data, test_data
-    train_data, test_data = data.iloc[:int(len(data) * 0.8), :], data.iloc[int(len(data) * 0.8):, :]
-    train_labels, test_labels = labels.iloc[:int(len(labels) * 0.8)], labels.iloc[int(len(labels) * 0.8):]
+def split_data_labels(data, test, train):
+    train_labels = train.iloc[:, -6:].to_numpy()
+    train_data = train.drop(columns=data.columns[-6:], axis=1).to_numpy()
+    test_labels = test.iloc[:, -6:].to_numpy()
+    test_data = test.drop(columns=data.columns[-6:], axis=1).to_numpy()
     return train_data, train_labels, test_data, test_labels
 
 
-def cv_split_data(data, labels, fold_num):
-    assert len(data) == len(labels)
+def split_data(data):
+    test = data.sample(frac=0.2, random_state=46)
+    train = data.drop(test.index)
+    train_data, train_labels, test_data, test_labels = split_data_labels(data, test, train)
+    return train_data, train_labels, test_data, test_labels
+
+
+def cv_split_data(data, fold_num):
     length = len(data)
     start = int(fold_num * 0.2 * length)
     end = int((fold_num + 1) * 0.2 * length)
-    train_data = pd.concat([data[:start], data[end:]])
-    train_labels = pd.concat([labels[:start], labels[end:]])
-    test_data = data[start:end]
-    test_labels = labels[start:end]
+    train = pd.concat([data[:start], data[end:]])
+    test = data[start:end]
+    test_data, test_labels, train_data, train_labels = split_data_labels(data, test, train)
     return train_data, train_labels, test_data, test_labels
 
 
@@ -106,25 +111,41 @@ def feature_extraction(data, method, n_features, train=False):
     return data
 
 
-def f(x):
+def fn(x):
     return labels_dict[x]
 
 
 def prepare_data(filepath):
     name = filename(filepath)
-    feature_path = f'models/{name}.pkl'
+    method = 'unigram'
+    n_features = 1000
+
+    feature_path = f'models/{name}_{method}_{n_features}.pkl'
     if os.path.exists(feature_path):
         data = pd.read_pickle(feature_path)
     else:
-        method = 'unigram'
-        n_features = 1000
         data = pd.read_csv('train.csv')
         data, _ = extract_features(data, method, n_features)
         pd.to_pickle(data, feature_path)
     X = data.iloc[:, 3:]
-    Y = data['emotions'].apply(f)
-    return X, Y
+    Y = pd.get_dummies(data['emotions'])
+    return pd.concat((X, Y), axis=1)
 
 
 def filename(filepath):
     return os.path.splitext(os.path.basename(filepath))[0]
+
+
+def encode_onehot(a):
+    """
+    Create one-hot encoding of the labels with rows as labels and columns as data rows.
+    Args:
+        a: labels
+
+    Returns:
+        one-hot encoding of the labels
+    """
+    a_onehot = np.zeros((a.size, len(labels_dict)))
+    for x in a.iteritems():
+        a_onehot[x[0], x[1]] = 1
+    return a_onehot
