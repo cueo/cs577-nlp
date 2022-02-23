@@ -1,9 +1,9 @@
 labels_dict = {
-    'sadness': 0,
-    'joy': 1,
-    'love': 2,
-    'anger': 3,
-    'fear': 4,
+    'anger': 0,
+    'fear': 1,
+    'joy': 2,
+    'love': 3,
+    'sadness': 4,
     'surprise': 5
 }
 
