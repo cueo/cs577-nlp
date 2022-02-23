@@ -54,6 +54,6 @@ def preprocess(sentence):
     words = scrub(words)
     words = remove_stopwords(words)
     words = lower(words)
-    words = stem(words)
+    # words = stem(words)
     words = lemmatize(words)
     return ' '.join(words)
